@@ -100,7 +100,18 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (!head || !q_size(head))
+        return NULL;
+
+    element_t *rm_node = container_of(head->prev, element_t, list);
+    list_del(head->prev);
+
+    if (sp) {
+        memcpy(sp, rm_node->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
+
+    return rm_node;
 }
 
 /* Return number of elements in queue */
@@ -120,9 +131,41 @@ int q_size(struct list_head *head)
 }
 
 /* Delete the middle node in queue */
+/**
+ * q_delete_mid() - Delete the middle node in queue
+ * @head: header of queue
+ *
+ * The middle node of a linked list of size n is the
+ * ⌊n / 2⌋th node from the start using 0-based indexing.
+ * If there're six elements, the third member should be returned.
+ *
+ * Reference:
+ * https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+ *
+ * Return: true for success, false if list is NULL or empty.
+ */
 bool q_delete_mid(struct list_head *head)
 {
-    // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+    if (!head || !q_size(head))
+        return false;
+
+    struct list_head *slow, *fast;
+    // element_t *tmp_slow, *tmp_fast;
+
+    for (slow = head->next, fast = head->next->next;
+         fast != head && fast->next != head;
+         slow = slow->next, fast = fast->next->next) {
+        /* Debug: Print the fast & slow in each stage*/
+        // if (slow!=head && fast!=head) {
+        //     tmp_slow = container_of(slow, element_t, list);
+        //     tmp_fast = container_of(fast, element_t, list);
+
+        //     printf("slow: %s, fast: %s\n", tmp_slow->value, tmp_fast->value);
+        //     printf("==========================\n");
+        // }
+    }
+
+    list_del(slow);
     return true;
 }
 
@@ -134,13 +177,43 @@ bool q_delete_dup(struct list_head *head)
 }
 
 /* Swap every two adjacent nodes */
+/**
+ * q_swap() - Swap every two adjacent nodes
+ * @head: header of queue
+ *
+ * Reference:
+ * https://leetcode.com/problems/swap-nodes-in-pairs/
+ */
 void q_swap(struct list_head *head)
 {
-    // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || !q_size(head))
+        return;
+
+    struct list_head *a, *b;
+
+    /* Note: after swapping, the position of a,b need to be noticed! */
+    for (a = head->next, b = head->next->next; a != head && b != head;
+         a = a->next, b = a->next) {
+        b->next->prev = a;
+        a->prev->next = b;
+        b->prev = a->prev;
+        a->next = b->next;
+        b->next = a;
+        a->prev = b;
+    }
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    struct list_head *iter, *ptr;
+
+    for (iter = head, ptr = head->prev; iter->next != ptr;
+         iter = iter->next, ptr = head->prev) {
+        list_del(ptr);
+        list_add(ptr, iter);
+    }
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
